@@ -1,35 +1,31 @@
-package com.ozodrukh.instant.eclass;
+package com.ozodrukh.instant.eclass.assignments;
 
 import android.content.Context;
+import android.graphics.Canvas;
+import android.graphics.Paint;
 import android.os.Bundle;
-import android.os.Parcel;
 import android.os.Parcelable;
 import android.support.annotation.Nullable;
 import android.support.design.widget.Snackbar;
-import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.DefaultItemAnimator;
 import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
-import android.text.TextUtils;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.view.ViewTreeObserver;
-import android.widget.TextView;
 import com.ozodrukh.eclass.InhaEclassController;
 import com.ozodrukh.eclass.ReportParser.ListRecordReportParser;
 import com.ozodrukh.eclass.Timber;
 import com.ozodrukh.eclass.entity.SubjectReport;
+import com.ozodrukh.instant.eclass.BaseFragment;
+import com.ozodrukh.instant.eclass.R;
 import com.ozodrukh.instant.eclass.utils.EndlessPagination;
-import com.ozodrukh.instant.eclass.utils.Utils;
+import com.ozodrukh.instant.eclass.utils.AndroidUtils;
 import java.io.IOException;
-import java.text.SimpleDateFormat;
 import java.util.ArrayList;
-import java.util.Calendar;
 import java.util.Collections;
-import java.util.Date;
 import java.util.List;
-import java.util.Locale;
 import okhttp3.ResponseBody;
 import retrofit2.Response;
 import rx.Observable;
@@ -38,21 +34,20 @@ import rx.functions.Action1;
 import rx.functions.Func1;
 import rx.schedulers.Schedulers;
 
-import static android.support.v7.widget.RecyclerView.ViewHolder;
 import static com.ozodrukh.eclass.InhaEclassWebService.Utils.getAssignmentsOptions;
 
 public class AssignmentsReportFragment extends BaseFragment {
   public static final String TAG = "fragment:assignments-report";
 
   private RecyclerView reportsListView;
-  private EndlessPagination pagintator;
+  private EndlessPagination pagination;
   private AssignmentsReportsAdapter adapter;
   private InhaEclassController eclassController;
 
   private Action1<List<SubjectReportExtended>> onAssignmentsReportLoaded =
       new Action1<List<SubjectReportExtended>>() {
         @Override public void call(List<SubjectReportExtended> reports) {
-          pagintator.setReceiveNotifications(!reports.isEmpty());
+          pagination.setReceiveNotifications(!reports.isEmpty());
           int itemsCount = adapter.getItemCount();
           adapter.addSubjectsReports(reports);
 
@@ -80,7 +75,7 @@ public class AssignmentsReportFragment extends BaseFragment {
                       }
 
                       // where 4 is additional threshold
-                      pagintator.setThreshold(visibleItemsCount + 4);
+                      pagination.setThreshold(visibleItemsCount + 4);
                       reportsListView.getViewTreeObserver().removeOnGlobalLayoutListener(this);
                     }
                   }
@@ -92,7 +87,7 @@ public class AssignmentsReportFragment extends BaseFragment {
   private EndlessPagination.OnThresholdReachListener onThresholdReachListener =
       new EndlessPagination.OnThresholdReachListener() {
         @Override public boolean onThresholdReached(int page) {
-          if (Utils.isNetworkAvailable(getContext())) {
+          if (AndroidUtils.isNetworkAvailable(getContext())) {
             getAssignmentsReport(page, onAssignmentsReportLoaded);
             return false;
           }
@@ -111,12 +106,14 @@ public class AssignmentsReportFragment extends BaseFragment {
     List<SubjectReportExtended> items = Collections.emptyList();
 
     if (state != null) {
-      pagintator = new EndlessPagination(reportsListView, onThresholdReachListener,
+      pagination = new EndlessPagination(reportsListView, onThresholdReachListener,
           state.getBoolean("receiveNotifications", true),
           state.getInt("scrollItemsThreshold", EndlessPagination.THRESHOLD),
           state.getInt("pagesLoaded", 0));
 
       items = state.getParcelableArrayList("adapter:items");
+
+      if (items == null) items = Collections.emptyList();
     }
 
     eclassController = InhaEclassController.getInstance();
@@ -124,10 +121,11 @@ public class AssignmentsReportFragment extends BaseFragment {
     reportsListView.setItemAnimator(new DefaultItemAnimator());
     reportsListView.setLayoutManager(new LinearLayoutManager(context));
     reportsListView.setAdapter(adapter = new AssignmentsReportsAdapter());
+    reportsListView.addItemDecoration(new BottomDivider(getContext()));
 
     adapter.addSubjectsReports(items);
 
-    pagintator = pagintator != null ? pagintator
+    pagination = pagination != null ? pagination
         : new EndlessPagination(reportsListView, onThresholdReachListener);
   }
 
@@ -135,15 +133,24 @@ public class AssignmentsReportFragment extends BaseFragment {
     super.onSaveInstanceState(outState);
 
     // Pagination state
-    outState.putInt("pagesLoaded", pagintator.getPage());
-    outState.putInt("scrollItemsThreshold", pagintator.getThreshold());
-    outState.putBoolean("receiveNotifications", pagintator.canSendNotifications());
+    outState.putInt("pagesLoaded", pagination.getPage());
+    outState.putInt("scrollItemsThreshold", pagination.getThreshold());
+    outState.putBoolean("receiveNotifications", pagination.canSendNotifications());
 
     // Fragment state
-    if (adapter.getItems() != Collections.EMPTY_LIST) {
+    if (!adapter.getItems().isEmpty()) {
       outState.putParcelableArrayList("adapter:items",
           (ArrayList<? extends Parcelable>) adapter.getItems());
     }
+  }
+
+  /**
+   * Refreshes UI by cleaning data and by resetting paginator that handles
+   * 0-page as cue to load data
+   */
+  public void requestRecreate() {
+    adapter.clear();
+    pagination.setPage(0);
   }
 
   /**
@@ -151,8 +158,10 @@ public class AssignmentsReportFragment extends BaseFragment {
    * @param callback Receive callback when loading done
    */
   protected void getAssignmentsReport(int page, Action1<List<SubjectReportExtended>> callback) {
+    adapter.setItemsLoading(true);
+
     eclassController.getWebService()
-        .getAssignmentsHistory(getAssignmentsOptions(eclassController.getCurrentUser(), page, null))
+        .getAssignmentsReport(getAssignmentsOptions(eclassController.getCurrentUser(), page, null))
         .flatMap(new Func1<Response<ResponseBody>, Observable<List<SubjectReportExtended>>>() {
           @Override public Observable<List<SubjectReportExtended>> call(
               Response<ResponseBody> reportsHtmlResponse) {
@@ -178,12 +187,12 @@ public class AssignmentsReportFragment extends BaseFragment {
         .observeOn(AndroidSchedulers.mainThread())
         .subscribe(callback, new Action1<Throwable>() {
           @Override public void call(Throwable err) {
-            pagintator.onPageDidNotLoaded();
+            pagination.onPageDidNotLoaded();
             Timber.e(err, "Oops!");
 
             if (getView() != null && err instanceof IOException) {
               Snackbar.make(getView(),
-                  Utils.getExceptionDetailHumanReadableMessage(getContext(), (IOException) err),
+                  AndroidUtils.getExceptionDetailHumanReadableMessage(getContext(), (IOException) err),
                   Snackbar.LENGTH_LONG).show();
             }
           }
@@ -191,9 +200,9 @@ public class AssignmentsReportFragment extends BaseFragment {
   }
 
   private static class AssignmentsReportsAdapter
-      extends RecyclerView.Adapter<SubjectAssignmentReportViewHolder> {
+      extends RecyclerView.Adapter<RecyclerView.ViewHolder> {
 
-    private List<SubjectReportExtended> subjectsReports = Collections.emptyList();
+    private List<SubjectReportExtended> subjectsReports = new ArrayList<>();
     private boolean itemsLoading;
 
     public List<SubjectReportExtended> getItems() {
@@ -202,6 +211,12 @@ public class AssignmentsReportFragment extends BaseFragment {
 
     public void setItemsLoading(boolean itemsLoading) {
       this.itemsLoading = itemsLoading;
+
+      if (itemsLoading) {
+        notifyItemInserted(subjectsReports.size());
+      } else {
+        notifyItemRemoved(subjectsReports.size());
+      }
     }
 
     public void addSubjectsReports(List<SubjectReportExtended> reports) {
@@ -209,13 +224,8 @@ public class AssignmentsReportFragment extends BaseFragment {
         return;
       }
 
-      if (subjectsReports == Collections.EMPTY_LIST) {
-        subjectsReports = new ArrayList<>();
-      }
-
       int positionStart = getItemCount();
-
-      itemsLoading = false;
+      setItemsLoading(false);
 
       subjectsReports.addAll(reports);
       notifyItemRangeInserted(positionStart, reports.size());
@@ -231,14 +241,25 @@ public class AssignmentsReportFragment extends BaseFragment {
       notifyItemRangeRemoved(0, itemsCount);
     }
 
-    @Override
-    public SubjectAssignmentReportViewHolder onCreateViewHolder(ViewGroup parent, int viewType) {
-      return SubjectAssignmentReportViewHolder.create(parent, viewType);
+    @Override public RecyclerView.ViewHolder onCreateViewHolder(ViewGroup parent, int viewType) {
+      if (viewType == 0) {
+        return SubjectAssignmentReportViewHolder.create(parent, viewType);
+      } else {
+        LayoutInflater factory = LayoutInflater.from(parent.getContext());
+        return new RecyclerView.ViewHolder(factory.inflate(R.layout.progress_bar, parent, false)) {
+        };
+      }
     }
 
-    @Override public void onBindViewHolder(SubjectAssignmentReportViewHolder holder, int position) {
-      holder.bind(subjectsReports.get(position));
-      holder.itemView.setBackgroundColor(position % 2 == 0 ? 0xFFFAFAFA : 0xFFE1F5FE);
+    @Override public void onBindViewHolder(RecyclerView.ViewHolder holder, int position) {
+      if (holder instanceof SubjectAssignmentReportViewHolder) {
+        SubjectAssignmentReportViewHolder sh = (SubjectAssignmentReportViewHolder) holder;
+        sh.bind(subjectsReports.get(position));
+      }
+    }
+
+    @Override public int getItemViewType(int position) {
+      return itemsLoading && position == subjectsReports.size() ? 1 : 0;
     }
 
     @Override public int getItemCount() {
@@ -246,142 +267,22 @@ public class AssignmentsReportFragment extends BaseFragment {
     }
   }
 
-  private static class SubjectAssignmentReportViewHolder extends ViewHolder {
-    private final static int COLOR_SCORE_PUBLIC = 0xFF009688;
-    private final static int COLOR_SCORE_PRIVATE = 0xFF757575;
+  static class BottomDivider extends RecyclerView.ItemDecoration {
 
-    public static SubjectAssignmentReportViewHolder create(ViewGroup parent, int type) {
+    static final Paint paint = new Paint();
 
-      return new SubjectAssignmentReportViewHolder(LayoutInflater.from(parent.getContext())
-          .inflate(R.layout.subject_assignmnet_report_item_view, parent, false));
+    public BottomDivider(Context context) {
+      paint.setColor(0x56777777);
+      paint.setStyle(Paint.Style.STROKE);
+      paint.setStrokeWidth(2);
     }
 
-    TextView attachmentName;
-    TextView subjectName;
-    TextView submissionDate;
-    TextView score;
-
-    SubjectReportExtended subjectReport;
-
-    public SubjectAssignmentReportViewHolder(View itemView) {
-      super(itemView);
-
-      attachmentName = (TextView) itemView.findViewById(R.id.attachment_name);
-      subjectName = (TextView) itemView.findViewById(R.id.subject_name);
-      submissionDate = (TextView) itemView.findViewById(R.id.submission_date);
-      score = (TextView) itemView.findViewById(R.id.recieved_score);
-
-      itemView.setOnClickListener(new View.OnClickListener() {
-        @Override public void onClick(View v) {
-          AppCompatActivity activity = (AppCompatActivity) v.getContext();
-
-          activity.getSupportFragmentManager()
-              .beginTransaction()
-              .add(R.id.app_content_view, AssignmentDetailFragment.newInstance(subjectReport),
-                  AssignmentDetailFragment.TAG)
-              .addToBackStack(AssignmentDetailFragment.TAG)
-              .commit();
-        }
-      });
-    }
-
-    public void bind(SubjectReportExtended report) {
-      subjectReport = report;
-      attachmentName.setVisibility(TextUtils.isEmpty(report.getName()) ? View.GONE : View.VISIBLE);
-
-      if (attachmentName.getVisibility() == View.VISIBLE) {
-        attachmentName.setText(report.getName());
+    @Override public void onDrawOver(Canvas c, RecyclerView parent, RecyclerView.State state) {
+      final int childCount = parent.getChildCount();
+      for (int i = 0; i < childCount; i++) {
+        View child = parent.getChildAt(i);
+        c.drawLine(child.getLeft(), child.getBottom(), child.getRight(), child.getBottom(), paint);
       }
-
-      subjectName.setText(report.getSubjectName());
-      submissionDate.setText(report.getSubmissionDateFormatted());
-
-      if (Double.isNaN(report.getScore())) {
-        score.setTextColor(COLOR_SCORE_PRIVATE);
-        score.setText(report.getScoreText());
-      } else {
-        score.setTextColor(COLOR_SCORE_PUBLIC);
-        score.setText(String.valueOf((int) report.getScore()));
-      }
-    }
-  }
-
-  public static class SubjectReportExtended extends SubjectReport implements Parcelable {
-    private static final SimpleDateFormat DAY_OF_MONTH =
-        new SimpleDateFormat("dd, MMMM", Locale.getDefault());
-    private static final SimpleDateFormat GENERAL_DATE =
-        new SimpleDateFormat("yyyy/MM/dd", Locale.getDefault());
-
-    private static final Calendar todayCalendar = Calendar.getInstance();
-
-    private String dateFormatted;
-
-    public SubjectReportExtended(SubjectReport report) {
-      setName(report.getName());
-      setSubjectName(report.getSubjectName());
-      setSubmissionDate(report.getSubmissionDate());
-      setAttachmentLink(report.getAttachmentLink());
-      setScore(report.getScore());
-      setScoreText(report.getScoreText());
-      setSemester(report.getSemester());
-      setYear(report.getYear());
-    }
-
-    protected SubjectReportExtended(Parcel in) {
-      super(in);
-      dateFormatted = in.readString();
-    }
-
-    @Override public void writeToParcel(Parcel dest, int flags) {
-      super.writeToParcel(dest, flags);
-      dest.writeString(dateFormatted);
-    }
-
-    @Override public int describeContents() {
-      return 0;
-    }
-
-    public static final Creator<SubjectReportExtended> CREATOR =
-        new Creator<SubjectReportExtended>() {
-          @Override public SubjectReportExtended createFromParcel(Parcel in) {
-            return new SubjectReportExtended(in);
-          }
-
-          @Override public SubjectReportExtended[] newArray(int size) {
-            return new SubjectReportExtended[size];
-          }
-        };
-
-    @Override public void setSubmissionDate(Date submissionDate) {
-      super.setSubmissionDate(submissionDate);
-
-      if (submissionDate == null) {
-        Timber.d("%s, has no submission date", getSubjectName());
-        return;
-      }
-
-      Calendar submissionCalendar = Calendar.getInstance();
-      submissionCalendar.setTimeInMillis(submissionDate.getTime());
-
-      SimpleDateFormat dateFormat;
-      if (todayCalendar.get(Calendar.YEAR) > submissionCalendar.get(Calendar.YEAR)
-          || todayCalendar.get(Calendar.MONTH) > submissionCalendar.get(Calendar.MONTH)) {
-        dateFormat = GENERAL_DATE;
-      } else {
-        dateFormat = DAY_OF_MONTH;
-      }
-
-      dateFormatted = dateFormat.format(submissionDate);
-    }
-
-    public String getSubmissionDateFormatted() {
-      return dateFormatted;
-    }
-
-    @Override public String toString() {
-      return "SubjectReportExtended{" +
-          "dateFormatted='" + dateFormatted + '\'' +
-          "} " + super.toString();
     }
   }
 }

@@ -81,7 +81,7 @@ public class Subject implements Parcelable{
     this.year = year;
   }
 
-  public String getSequence() {
+  public String   getSequence() {
     return sequence;
   }
 

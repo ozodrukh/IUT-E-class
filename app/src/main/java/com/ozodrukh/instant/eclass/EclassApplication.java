@@ -2,7 +2,7 @@ package com.ozodrukh.instant.eclass;
 
 import android.app.Application;
 import com.ozodrukh.eclass.Timber;
-import com.ozodrukh.instant.eclass.utils.Utils;
+import com.ozodrukh.instant.eclass.utils.AndroidUtils;
 import com.yandex.metrica.YandexMetrica;
 
 public class EclassApplication extends Application{
@@ -17,7 +17,7 @@ public class EclassApplication extends Application{
     super.onCreate();
     instance = this;
 
-    Timber.plant(new Utils.AndroidDebugTree());
+    Timber.plant(new AndroidUtils.AndroidDebugTree());
 
     // Initializing the AppMetrica SDK
     YandexMetrica.activate(getApplicationContext(), "0a0859b6-6bf3-4c25-82cd-1cbae54c0023");

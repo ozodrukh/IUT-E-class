@@ -1,8 +1,9 @@
-package com.ozodrukh.instant.eclass;
+package com.ozodrukh.instant.eclass.accounts;
 
 import android.accounts.Account;
 import android.accounts.AccountManager;
-import android.content.Context;
+import android.app.Activity;
+import android.content.Intent;
 import android.os.Bundle;
 import android.support.annotation.Nullable;
 import android.support.design.widget.Snackbar;
@@ -16,8 +17,9 @@ import com.ozodrukh.eclass.InhaEclassWebService;
 import com.ozodrukh.eclass.InhaSessionEncoder;
 import com.ozodrukh.eclass.Timber;
 import com.ozodrukh.eclass.entity.User;
-import com.ozodrukh.instant.eclass.accounts.EclassAuthenticator;
-import com.ozodrukh.instant.eclass.utils.Utils;
+import com.ozodrukh.instant.eclass.BaseFragment;
+import com.ozodrukh.instant.eclass.R;
+import com.ozodrukh.instant.eclass.utils.AndroidUtils;
 import java.io.IOException;
 import java.util.List;
 import retrofit2.Response;
@@ -28,6 +30,10 @@ import rx.functions.Func1;
 import rx.schedulers.Schedulers;
 
 public class LoginEclassFragment extends BaseFragment {
+
+  /** Provides access to signed user when he was authenticated in Application */
+  public static final String KEY_USER = "arg:user";
+
   public static final String TAG = "fragment:sign-in";
 
   private View signInButton;
@@ -50,10 +56,10 @@ public class LoginEclassFragment extends BaseFragment {
       @Override public void onClick(View v) {
         Snackbar.make(v, String.format("Signin process username = %s, password = %s, online = %s",
             userIdView.getText(), userPasswordView.getText(),
-            Utils.isNetworkAvailable(getContext())), Snackbar.LENGTH_LONG).show();
+            AndroidUtils.isNetworkAvailable(getContext())), Snackbar.LENGTH_LONG).show();
 
         Observable<Response<List<User>>> observable;
-        if (!Utils.isNetworkAvailable(getContext())) {
+        if (!AndroidUtils.isNetworkAvailable(getContext())) {
           observable = Observable.empty();
         } else {
           observable = InhaEclassController.getInstance()
@@ -111,7 +117,7 @@ public class LoginEclassFragment extends BaseFragment {
               setLoginFormEnabled(true);
 
               Snackbar.make(view,
-                  Utils.getExceptionDetailHumanReadableMessage(getContext(), (IOException) e),
+                  AndroidUtils.getExceptionDetailHumanReadableMessage(getContext(), (IOException) e),
                   Snackbar.LENGTH_LONG).show();
             } else {
               Snackbar.make(view, e.getLocalizedMessage(), Snackbar.LENGTH_LONG).show();
@@ -140,11 +146,12 @@ public class LoginEclassFragment extends BaseFragment {
       manager.setAuthToken(account, EclassAuthenticator.ECLASS_USER, token);
     }
 
-    Context context = getContext();
+    Intent intent = new Intent();
+    intent.putExtra(KEY_USER, user);
 
-    if (context instanceof MainActivity) {
-      ((MainActivity) context).startAssignmentsReportsFragment();
-    }
+    Activity hostActivity = getActivity();
+    hostActivity.setResult(Activity.RESULT_OK, intent);
+    hostActivity.finish();
   }
 
   /**

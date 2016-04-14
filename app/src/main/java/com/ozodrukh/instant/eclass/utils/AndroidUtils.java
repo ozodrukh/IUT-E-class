@@ -11,7 +11,7 @@ import java.net.UnknownHostException;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-public class Utils {
+public class AndroidUtils {
 
   /**
    * Checks whether mobile device connected to the network
@@ -38,7 +38,7 @@ public class Utils {
   }
 
   public static CharSequence getExceptionDetailHumanReadableMessage(Context context, IOException e){
-    NetworkInfo networkInfo = Utils.getActiveNetwork(context);
+    NetworkInfo networkInfo = AndroidUtils.getActiveNetwork(context);
     StringBuilder troubleCauseName = new StringBuilder();
 
     if(networkInfo == null){

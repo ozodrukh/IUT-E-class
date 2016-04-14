@@ -11,6 +11,9 @@
   <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
   <uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION"/>
 
+  <uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE"/>
+  <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE"/>
+
   <application
       android:name=".EclassApplication"
       android:allowBackup="true"
@@ -29,6 +32,9 @@
       </intent-filter>
     </activity>
 
+    <!-- Authentication Activity responsible for user log ins, launched by MainActivity class -->
+    <activity android:name=".accounts.AuthenticationActivity" />
+
     <service android:name=".accounts.EclassAuthenticationService">
       <intent-filter>
         <action android:name="android.accounts.AccountAuthenticator" />
@@ -37,6 +43,12 @@
       <meta-data android:name="android.accounts.AccountAuthenticator"
           android:resource="@xml/eclass_authenticator" />
     </service>
+
+    <service
+        android:name=".assignments.AttachmentDownloaderService"
+        android:enabled="true"
+        android:exported="false"
+        />
 
   </application>
 

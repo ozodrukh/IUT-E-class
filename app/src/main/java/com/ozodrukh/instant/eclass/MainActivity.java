@@ -4,26 +4,27 @@ import android.accounts.Account;
 import android.accounts.AccountManager;
 import android.accounts.AccountManagerCallback;
 import android.accounts.AccountManagerFuture;
+import android.content.Intent;
 import android.os.Build;
 import android.os.Bundle;
-import android.support.design.widget.FloatingActionButton;
+import android.support.annotation.NonNull;
 import android.support.design.widget.NavigationView;
-import android.support.design.widget.Snackbar;
-import android.support.v4.app.FragmentManager;
 import android.support.v4.app.FragmentTransaction;
 import android.support.v4.view.GravityCompat;
 import android.support.v4.widget.DrawerLayout;
 import android.support.v7.app.ActionBarDrawerToggle;
 import android.support.v7.widget.Toolbar;
-import android.view.Menu;
 import android.view.MenuItem;
+import android.view.View;
+import android.widget.TextView;
 import com.ozodrukh.eclass.InhaEclassController;
-import com.ozodrukh.eclass.Timber;
 import com.ozodrukh.eclass.entity.User;
+import com.ozodrukh.instant.eclass.accounts.AuthenticationActivity;
 import com.ozodrukh.instant.eclass.accounts.EclassAuthenticator;
-import com.ozodrukh.instant.eclass.utils.Utils;
+import com.ozodrukh.instant.eclass.accounts.LoginEclassFragment;
+import com.ozodrukh.instant.eclass.assignments.AssignmentsReportFragment;
+import com.ozodrukh.instant.eclass.utils.RxUtils;
 import com.trello.rxlifecycle.components.support.RxAppCompatActivity;
-import java.io.IOException;
 import java.util.List;
 import retrofit2.Response;
 import rx.android.schedulers.AndroidSchedulers;
@@ -32,7 +33,7 @@ import rx.schedulers.Schedulers;
 
 import static com.ozodrukh.eclass.InhaSessionEncoder.encode;
 
-public class MainActivity extends RxAppCompatActivity
+@SuppressWarnings("ConstantConditions") public class MainActivity extends RxAppCompatActivity
     implements NavigationView.OnNavigationItemSelectedListener {
 
   private NavigationView navigationView;
@@ -43,43 +44,82 @@ public class MainActivity extends RxAppCompatActivity
     Toolbar toolbar = (Toolbar) findViewById(R.id.toolbar);
     setSupportActionBar(toolbar);
 
-    FloatingActionButton fab = (FloatingActionButton) findViewById(R.id.fab);
-
     DrawerLayout drawer = (DrawerLayout) findViewById(R.id.drawer_layout);
     ActionBarDrawerToggle toggle =
         new ActionBarDrawerToggle(this, drawer, toolbar, R.string.navigation_drawer_open,
             R.string.navigation_drawer_close);
-    drawer.setDrawerListener(toggle);
+    drawer.addDrawerListener(toggle);
     toggle.syncState();
 
     navigationView = (NavigationView) findViewById(R.id.nav_view);
     navigationView.setNavigationItemSelectedListener(this);
+  }
+
+  @Override protected void onResume() {
+    super.onResume();
 
     checkUserLoggedIn();
   }
 
+  @Override public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions,
+      @NonNull int[] grantResults) {
+    super.onRequestPermissionsResult(requestCode, permissions, grantResults);
+  }
+
+  @Override protected void onActivityResult(int requestCode, int resultCode, Intent data) {
+    super.onActivityResult(requestCode, resultCode, data);
+
+    if (requestCode == AuthenticationActivity.REQUEST_ID) {
+      if (resultCode == RESULT_OK) {
+        User user = data.getParcelableExtra(LoginEclassFragment.KEY_USER);
+        setPrimaryUser(user);
+      }
+    }
+  }
+
+  /**
+   * On primary user was determined application will configure all details
+   * depends on previously configuration for this user
+   *
+   * TODO - avatar, email in navigation drawer?
+   * TODO - user configurations
+   *
+   * @param user User that is primary for current session
+   */
+  protected void setPrimaryUser(User user) {
+    View userBanner = navigationView.getHeaderView(0);
+
+    TextView nameView = (TextView) userBanner.findViewById(R.id.user_name);
+    nameView.setText(user.getUserId());
+
+    InhaEclassController.getInstance().setCurrentUser(user);
+  }
+
+  /**
+   * Checks whether already has accounts in application, if no system requires
+   * log in in order to use Application therefore we launching {@link AuthenticationActivity}
+   * otherwise we loading assignments history
+   */
   protected void checkUserLoggedIn() {
     Account[] eclassAccounts = EclassAuthenticator.getAccounts();
-    LoginEclassFragment fragment =
-        (LoginEclassFragment) getSupportFragmentManager().findFragmentByTag(
-            LoginEclassFragment.TAG);
 
     if (eclassAccounts.length == 0) {
-      if (fragment == null || !fragment.isAdded()) {
-        getSupportFragmentManager().beginTransaction()
-            .add(R.id.app_content_view, new LoginEclassFragment(), LoginEclassFragment.TAG)
-            .addToBackStack(LoginEclassFragment.TAG)
-            .commit();
-      }
+      // REQUEST User Log in
+      startActivityForResult(new Intent(this, AuthenticationActivity.class),
+          AuthenticationActivity.REQUEST_ID);
     } else {
       AccountManager am = AccountManager.get(this);
       //TODO multi account feature
       Account primaryAccount = eclassAccounts[0];
       User primaryUser = EclassAuthenticator.loadUser(am, primaryAccount);
 
-      InhaEclassController controller = InhaEclassController.getInstance();
-      controller.setCurrentUser(primaryUser);
-      controller.getWebService()
+      setPrimaryUser(primaryUser);
+
+      // As we know E-class currently drops all session in next 2-3 hours
+      // therefore we need always sign in again
+
+      InhaEclassController.getInstance()
+          .getWebService()
           .signIn(encode(primaryUser.getUserId()), encode(am.getPassword(primaryAccount)),
               primaryUser.getGrCode())
           .subscribeOn(Schedulers.io())
@@ -89,53 +129,27 @@ public class MainActivity extends RxAppCompatActivity
             @Override public void call(Response<List<User>> listResponse) {
               startAssignmentsReportsFragment();
             }
-          }, new Action1<Throwable>() {
-            @Override public void call(Throwable throwable) {
-              Timber.e(throwable, "Couldn't update User session");
-
-              if(throwable instanceof IOException){
-                CharSequence errorMsg = Utils.getExceptionDetailHumanReadableMessage(MainActivity.this,
-                    (IOException) throwable);
-
-                Snackbar.make(findViewById(android.R.id.content), errorMsg, Snackbar.LENGTH_LONG)
-                    .show();
-              }
-            }
-          });
+          }, RxUtils.handleIOExceptions(this));
     }
   }
 
   public AssignmentsReportFragment startAssignmentsReportsFragment() {
-    LoginEclassFragment loginFragment =
-        (LoginEclassFragment) getSupportFragmentManager().findFragmentByTag(
-            LoginEclassFragment.TAG);
-
-    FragmentTransaction transaction = null;
-
-    if (loginFragment != null && loginFragment.isAdded()) {
-      transaction = getSupportFragmentManager().beginTransaction();
-
-      transaction.hide(loginFragment);
-    }
+    FragmentTransaction transaction = getSupportFragmentManager().beginTransaction();
 
     AssignmentsReportFragment reportFragment =
         (AssignmentsReportFragment) getSupportFragmentManager().findFragmentByTag(
             AssignmentsReportFragment.TAG);
 
     if (reportFragment == null) {
-      if (transaction == null) {
-        transaction = getSupportFragmentManager().beginTransaction();
-      }
       reportFragment = new AssignmentsReportFragment();
       transaction.add(R.id.app_content_view, reportFragment, AssignmentsReportFragment.TAG)
           .addToBackStack(AssignmentsReportFragment.TAG)
           .commit();
+    } else {
+      reportFragment.requestRecreate();
     }
 
-    navigationView.getMenu()
-        .findItem(R.id.assignment_history)
-        .setChecked(true);
-
+    navigationView.getMenu().findItem(R.id.assignment_history).setChecked(true);
     return reportFragment;
   }
 
@@ -146,26 +160,6 @@ public class MainActivity extends RxAppCompatActivity
     } else {
       super.onBackPressed();
     }
-  }
-
-  @Override public boolean onCreateOptionsMenu(Menu menu) {
-    // Inflate the menu; this adds items to the action bar if it is present.
-    // getMenuInflater().inflate(R.menu.main, menu);
-    return false;
-  }
-
-  @Override public boolean onOptionsItemSelected(MenuItem item) {
-    // Handle action bar item clicks here. The action bar will
-    // automatically handle clicks on the Home/Up button, so long
-    // as you specify a parent activity in AndroidManifest.xml.
-    int id = item.getItemId();
-
-    //noinspection SimplifiableIfStatement
-    if (id == R.id.action_settings) {
-      return true;
-    }
-
-    return super.onOptionsItemSelected(item);
   }
 
   @SuppressWarnings("StatementWithEmptyBody") @Override
@@ -190,13 +184,13 @@ public class MainActivity extends RxAppCompatActivity
       if (Build.VERSION.SDK_INT >= 23) {
         am.removeAccount(eclassAccounts[0], this, new AccountManagerCallback<Bundle>() {
           @Override public void run(AccountManagerFuture<Bundle> future) {
-            dispatchUserLogout();
+            recreate();
           }
         }, null);
       } else {
         am.removeAccount(eclassAccounts[0], new AccountManagerCallback<Boolean>() {
           @Override public void run(AccountManagerFuture<Boolean> future) {
-            dispatchUserLogout();
+            recreate();
           }
         }, null);
       }
@@ -205,15 +199,5 @@ public class MainActivity extends RxAppCompatActivity
     DrawerLayout drawer = (DrawerLayout) findViewById(R.id.drawer_layout);
     drawer.closeDrawer(GravityCompat.START);
     return true;
-  }
-
-  protected void dispatchUserLogout() {
-    final FragmentManager fm = getSupportFragmentManager();
-    final int backStackEntryCount = fm.getBackStackEntryCount();
-    for (int i = 0; i < backStackEntryCount; i++) {
-      fm.popBackStack(fm.getBackStackEntryAt(i).getName(), 0);
-    }
-
-    checkUserLoggedIn();
   }
 }

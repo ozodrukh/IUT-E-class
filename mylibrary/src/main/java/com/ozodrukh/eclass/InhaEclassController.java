@@ -33,25 +33,26 @@ public class InhaEclassController {
   }
 
   private User currentUser;
+  private OkHttpClient okHttpClient;
   private InhaEclassWebService webService;
 
   public InhaEclassController(String token) {
     // if token is available add token cookie in every header
     Cookie jSession = token == null ? null
         : new Cookie.Builder().name(InhaEclassWebService.KEY_TOKEN)
-            .domain("http://eclass.inha.uz").path("/").value(token).build();
+            .domain(InhaEclassWebService.ENDPOINT).path("/").value(token).build();
 
-    OkHttpClient client = new OkHttpClient.Builder().addNetworkInterceptor(
+    OkHttpClient client = okHttpClient = new OkHttpClient.Builder().addNetworkInterceptor(
         new HttpLoggingInterceptor().setLevel(HttpLoggingInterceptor.Level.BODY))
       /* Allow further api calls requires JSESSION_ID token in cookie */
         .cookieJar(Utils.provideCookiesManager(
-            jSession == null ? Collections.EMPTY_LIST : Collections.singletonList(jSession)))
+            jSession == null ? Collections.<Cookie>emptyList() : Collections.singletonList(jSession)))
         .build();
 
     ObjectMapper mapper = new ObjectMapper();
     mapper.disable(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES);
 
-    this.webService = new Retrofit.Builder().baseUrl("http://eclass.inha.uz")
+    this.webService = new Retrofit.Builder().baseUrl(InhaEclassWebService.ENDPOINT)
         // Put it first so the next converter will receive proper json value instead of jsx
         .addConverterFactory(new JsObjectConverterFactory())
         .addConverterFactory(JacksonConverterFactory.create(mapper))
@@ -59,6 +60,10 @@ public class InhaEclassController {
         .callFactory(client)
         .build()
         .create(InhaEclassWebService.class);
+  }
+
+  public OkHttpClient getOkHttpClient() {
+    return okHttpClient;
   }
 
   /**

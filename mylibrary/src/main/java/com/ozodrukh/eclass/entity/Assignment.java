@@ -2,11 +2,11 @@ package com.ozodrukh.eclass.entity;
 
 import android.os.Parcel;
 import android.os.Parcelable;
-import com.ozodrukh.eclass.Utils;
+import android.text.TextUtils;
 import com.ozodrukh.eclass.guava.ParcelableUtils;
 import java.util.Date;
 
-public class Assignment implements Parcelable{
+public class Assignment implements Parcelable {
   private int week;
   private int lesson;
   private String assignmentTitle;
@@ -17,8 +17,23 @@ public class Assignment implements Parcelable{
   private double maxScore;
   private double minScore;
   private double totalScore;
+  private String totalScoreText;
 
   public Assignment() {
+  }
+
+  @Override public void writeToParcel(Parcel dest, int flags) {
+    dest.writeInt(week);
+    dest.writeInt(lesson);
+    dest.writeString(assignmentTitle);
+    dest.writeDouble(maxScore);
+    dest.writeDouble(minScore);
+    dest.writeDouble(totalScore);
+    dest.writeString(totalScoreText);
+
+    ParcelableUtils.writeDate(dest, fromDate);
+    ParcelableUtils.writeDate(dest, tillDate);
+    ParcelableUtils.writeDate(dest, submissionDate);
   }
 
   protected Assignment(Parcel in) {
@@ -28,6 +43,7 @@ public class Assignment implements Parcelable{
     maxScore = in.readDouble();
     minScore = in.readDouble();
     totalScore = in.readDouble();
+    totalScoreText = in.readString();
 
     fromDate = ParcelableUtils.readDate(in);
     tillDate = ParcelableUtils.readDate(in);
@@ -101,8 +117,7 @@ public class Assignment implements Parcelable{
   }
 
   public void setMaxScoreText(String scoreText) {
-    int tillPoint = scoreText.indexOf("Point");
-    this.maxScore = Utils.decodeNumber(scoreText, 0, tillPoint == -1 ? scoreText.length() : tillPoint);
+    this.maxScore = decodePointNumber(scoreText);
   }
 
   public double getMinScore() {
@@ -114,12 +129,19 @@ public class Assignment implements Parcelable{
   }
 
   public void setMinScoreText(String scoreText) {
-    int tillPoint = scoreText.indexOf("Point");
-    this.minScore = Utils.decodeNumber(scoreText, 0, tillPoint == -1 ? scoreText.length() : tillPoint);
+    this.minScore = decodePointNumber(scoreText);
   }
 
   public double getTotalScore() {
     return totalScore;
+  }
+
+  public boolean isTotalScoreUnavailable(){
+    return !TextUtils.isEmpty(totalScoreText);
+  }
+
+  public String getTotalScoreText() {
+    return totalScoreText;
   }
 
   public void setTotalScore(double totalScore) {
@@ -127,12 +149,22 @@ public class Assignment implements Parcelable{
   }
 
   public void setTotalScoreText(String scoreText) {
-    int tillPoint = scoreText.indexOf("Point");
-    this.totalScore = Utils.decodeNumber(scoreText, 0, tillPoint == -1 ? scoreText.length() : tillPoint);
+    try{
+      this.totalScore = decodePointNumber(scoreText);
+    }catch (NumberFormatException e){
+      this.totalScoreText = scoreText;
+    }
   }
 
-  @Override
-  public String toString() {
+  protected static double decodePointNumber(String scoreText){
+    int tillPoint = scoreText.indexOf("Point");
+    if (tillPoint != -1) {
+      scoreText = scoreText.substring(0, tillPoint).trim();
+    }
+    return Double.parseDouble(scoreText);
+  }
+
+  @Override public String toString() {
     return "Assignment{" +
         "week=" + week +
         ", lesson=" + lesson +
@@ -150,16 +182,4 @@ public class Assignment implements Parcelable{
     return 0;
   }
 
-  @Override public void writeToParcel(Parcel dest, int flags) {
-    dest.writeInt(week);
-    dest.writeInt(lesson);
-    dest.writeString(assignmentTitle);
-    dest.writeDouble(maxScore);
-    dest.writeDouble(minScore);
-    dest.writeDouble(totalScore);
-
-    ParcelableUtils.writeDate(dest, fromDate);
-    ParcelableUtils.writeDate(dest, tillDate);
-    ParcelableUtils.writeDate(dest, submissionDate);
-  }
 }

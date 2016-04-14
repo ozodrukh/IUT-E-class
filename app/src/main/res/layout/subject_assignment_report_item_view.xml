@@ -1,0 +1,128 @@
+<?xml version="1.0" encoding="utf-8"?>
+<layout
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    tools:ignore="RtlHardcoded"
+    >
+
+  <data>
+    <import type="java.lang.Double"/>
+    <import type="android.view.View"/>
+    <import type="android.text.TextUtils"/>
+
+    <variable
+        name="subjectReport"
+        type="com.ozodrukh.instant.eclass.assignments.SubjectReportExtended"
+        />
+    <variable
+        name="viewHolder"
+        type="com.ozodrukh.instant.eclass.assignments.SubjectAssignmentReportViewHolder"
+        />
+  </data>
+
+  <android.support.v7.widget.CardView
+      android:layout_width="match_parent"
+      android:layout_height="wrap_content"
+      >
+
+    <RelativeLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:padding="16dp"
+        >
+
+      <LinearLayout
+          android:layout_width="match_parent"
+          android:layout_height="wrap_content"
+          android:layout_marginRight="4dp"
+          android:layout_toLeftOf="@+id/points_frame"
+          android:orientation="vertical"
+          >
+
+        <TextView
+            android:id="@+id/subject_name"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:ellipsize="end"
+            android:singleLine="true"
+            android:text="@{subjectReport.subjectName}"
+            tools:text="Object Oriented Programming"
+            style="@style/Base.TextAppearance.AppCompat.Body1"
+            />
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="4dp"
+            android:gravity="center_vertical"
+            android:orientation="horizontal"
+            >
+
+          <TextView
+              android:id="@+id/submission_date"
+              android:layout_width="wrap_content"
+              android:layout_height="wrap_content"
+              android:textColor="#60000000"
+              android:textSize="12sp"
+              app:relativeTime="@{subjectReport.submissionDate}"
+              tools:text="10th February"
+              style="@style/TextAppearance.AppCompat.Caption"
+              />
+
+          <TextView
+              android:id="@+id/attachment_name"
+              android:layout_width="wrap_content"
+              android:layout_height="wrap_content"
+              android:layout_marginLeft="8dp"
+              android:drawablePadding="4dp"
+              android:ellipsize="end"
+              android:gravity="center"
+              android:onClick="@{viewHolder.handleAttachmentLink}"
+              android:singleLine="true"
+              android:visibility="@{TextUtils.isEmpty(subjectReport.name) ? View.GONE : View.VISIBLE}"
+              app:fakeAttachmentLink="@{subjectReport}"
+              tools:text="Elon Musk Presentation.pdf"
+              style="@style/TextAppearance.AppCompat.Caption"
+              />
+
+        </LinearLayout>
+
+      </LinearLayout>
+
+      <LinearLayout
+          android:id="@+id/points_frame"
+          android:layout_width="wrap_content"
+          android:layout_height="wrap_content"
+          android:layout_alignParentRight="true"
+          android:layout_centerInParent="true"
+          android:gravity="center"
+          android:orientation="vertical"
+          >
+
+        <TextView
+            android:id="@+id/received_score"
+            android:layout_width="wrap_content"
+            android:layout_height="match_parent"
+            android:text='@{subjectReport.score + ""}'
+            android:visibility='@{Double.isNaN(subjectReport.score) ? View.GONE : View.VISIBLE}'
+            tools:text="90.0"
+            style="@style/Base.TextAppearance.AppCompat.Subhead"
+            />
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:onClick="@{Double.isNaN(subjectReport.score) ? viewHolder.handlePrivateScore : null}"
+            android:text='@{Double.isNaN(subjectReport.score) ? "Private" : "Points"}'
+            android:textSize="14sp"
+            tools:text="Points"
+            style="@style/TextAppearance.AppCompat.Caption"
+            />
+
+      </LinearLayout>
+
+    </RelativeLayout>
+  </android.support.v7.widget.CardView>
+
+</layout>

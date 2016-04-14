@@ -19,6 +19,7 @@ import rx.Observable;
 public interface InhaEclassWebService {
   String GR_CODE = "N000001";
   String KEY_TOKEN = "JSESSIONID";
+  String ENDPOINT = "http://eclass.inha.uz";
 
   @FormUrlEncoded @POST("jsp/include/ajax.login.jsp") Observable<Response<List<User>>> signIn(
       @Field("p_userid") String userId, @Field("p_passwd") String password,
@@ -28,10 +29,7 @@ public interface InhaEclassWebService {
       @FieldMap Map<String, String> fields);
 
   @FormUrlEncoded @POST("servlet/controller.learn.ReportStuServlet")
-  Observable<Response<ResponseBody>> getAssignmentsHistory(@FieldMap Map<String, String> fields);
-
-  @FormUrlEncoded @POST("servlet/controller.learn.ReportStuServlet")
-  Observable<Response<ResponseBody>> getAssignmentDetail(@FieldMap Map<String, String> fields);
+  Observable<Response<ResponseBody>> getAssignmentsReport(@FieldMap Map<String, String> fields);
 
   /**
    * Utilities for sending options for E-class system with their default values
@@ -73,8 +71,7 @@ public interface InhaEclassWebService {
     public static Map<String, String> getReportOptions(String method, int page, User user,
         Subject subject) {
       OptionsBuilder<String, String> builder =
-          new OptionsBuilder<String, String>()
-              .put("p_process", method)
+          new OptionsBuilder<String, String>().put("p_process", method)
               .put("p_pageno", String.valueOf(page))
               .put("p_reptype", "P")
               .put("p_isreport", "Y");

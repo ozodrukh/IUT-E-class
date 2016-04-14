@@ -2,6 +2,7 @@ package com.ozodrukh.eclass.entity;
 
 import android.os.Parcel;
 import android.os.Parcelable;
+import com.ozodrukh.eclass.Timber;
 import com.ozodrukh.eclass.Utils;
 import com.ozodrukh.eclass.guava.OptionsBuilder;
 import com.ozodrukh.eclass.guava.ParcelableUtils;
@@ -48,7 +49,7 @@ public class SubjectReport implements Parcelable{
   /**
    * @return Text inside single quotes
    */
-  private static String getSingleQuotesText(String value) {
+  public static String clearQuotes(String value) {
     StringBuilder builder = new StringBuilder();
     boolean readLiteral = false;
     int index = 0;
@@ -89,6 +90,18 @@ public class SubjectReport implements Parcelable{
     this.semester = semester;
     this.submissionDate = submissionDate;
     this.detailAttrs = detailAttrs;
+  }
+
+  public SubjectReport(SubjectReport report) {
+    this.name = report.name;
+    this.scoreText = report.scoreText;
+    this.score = report.score;
+    this.subjectName = report.subjectName;
+    this.attachmentLink = report.attachmentLink;
+    this.year = report.year;
+    this.semester = report.semester;
+    this.submissionDate = report.submissionDate;
+    this.detailAttrs = report.detailAttrs;
   }
 
   public SubjectReport() {
@@ -173,17 +186,18 @@ public class SubjectReport implements Parcelable{
     return new OptionsBuilder<String, String>()
         .put("p_process", "viewRecordReport")
         .put("p_pageno", "")
-        .put("p_grcode", getSingleQuotesText(detailAttrs[0]))
-        .put("p_subj", getSingleQuotesText(detailAttrs[1]))
-        .put("p_year", getSingleQuotesText(detailAttrs[2]))
-        .put("p_subjseq", getSingleQuotesText(detailAttrs[3]))
-        .put("p_class", getSingleQuotesText(detailAttrs[4]))
-        .put("p_ordseq", getSingleQuotesText(detailAttrs[5]))
-        .put("p_seq", getSingleQuotesText(detailAttrs[6]))
+        .put("p_grcode", clearQuotes(detailAttrs[0]))
+        .put("p_subj", clearQuotes(detailAttrs[1]))
+        .put("p_year", clearQuotes(detailAttrs[2]))
+        .put("p_subjseq", clearQuotes(detailAttrs[3]))
+        .put("p_class", clearQuotes(detailAttrs[4]))
+        .put("p_ordseq", clearQuotes(detailAttrs[5]))
+        .put("p_seq", clearQuotes(detailAttrs[6]))
         .build();
   }
 
   public void setDetailAttrs(String[] detailAttrs) {
+    Timber.d(Arrays.toString(detailAttrs));
     this.detailAttrs = detailAttrs;
   }
 

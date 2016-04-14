@@ -1,5 +1,6 @@
 package com.ozodrukh.eclass;
 
+import android.text.TextUtils;
 import com.ozodrukh.eclass.entity.Assignment;
 import com.ozodrukh.eclass.entity.SubjectReport;
 import java.text.ParseException;
@@ -55,7 +56,9 @@ public abstract class ReportParser<ParsedData> {
               report.setSubjectName(element.text());
               break;
             case ASSIGNMENT_TITLE:
-              report.setName(element.text());
+              Element anchor = element.child(0);
+              report.setAttachmentLink(anchor.attr("href"));
+              report.setName(TextUtils.isEmpty(anchor.text()) ? anchor.attr("title") : anchor.text());
               break;
             case SUBMISSION_DATE:
               try {
@@ -118,7 +121,7 @@ public abstract class ReportParser<ParsedData> {
 
       Assignment assignment = new Assignment();
 
-      if(tables.isEmpty()){
+      if (tables.isEmpty()) {
         return assignment;
       }
 
@@ -157,7 +160,7 @@ public abstract class ReportParser<ParsedData> {
       final Elements submitterInfo = tables.get(1).select("tbody tr:nth-child(2) td");
       for (int i = 0; i < submitterInfo.size(); i++) {
         Element element = submitterInfo.get(i);
-        switch (i){
+        switch (i) {
           case SUBMISSION_DATE:
             try {
               assignment.setSubmissionDate(ECLASS_DATE_PATTERN.parse(element.text()));

@@ -50,6 +50,16 @@ public class EndlessPagination extends RecyclerView.OnScrollListener {
     onScrollStateChanged(null, SCROLL_STATE_IDLE);
   }
 
+  public void setPage(int pageNumber){
+    this.page = pageNumber;
+
+    // zero page means that view requires to load first page
+    if(page == 0) {
+      // load first page
+      onScrollStateChanged(null, SCROLL_STATE_IDLE);
+    }
+  }
+
   public boolean canSendNotifications() {
     return receiveNotifications;
   }
