@@ -19,7 +19,7 @@ import rx.Observable;
 public interface InhaEclassWebService {
   String GR_CODE = "N000001";
   String KEY_TOKEN = "JSESSIONID";
-  String ENDPOINT = "http://eclass.inha.uz";
+  String ENDPOINT = "https://eclass.inha.uz";
 
   @FormUrlEncoded @POST("jsp/include/ajax.login.jsp") Observable<Response<List<User>>> signIn(
       @Field("p_userid") String userId, @Field("p_passwd") String password,
