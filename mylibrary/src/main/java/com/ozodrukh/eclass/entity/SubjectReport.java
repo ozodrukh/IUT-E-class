@@ -2,15 +2,13 @@ package com.ozodrukh.eclass.entity;
 
 import android.os.Parcel;
 import android.os.Parcelable;
+import com.ozodrukh.eclass.OptionsBuilder;
 import com.ozodrukh.eclass.Timber;
-import com.ozodrukh.eclass.Utils;
-import com.ozodrukh.eclass.guava.OptionsBuilder;
-import com.ozodrukh.eclass.guava.ParcelableUtils;
 import java.util.Arrays;
 import java.util.Date;
 import java.util.Map;
 
-public class SubjectReport implements Parcelable{
+public class SubjectReport implements Parcelable {
 
   protected SubjectReport(Parcel in) {
     name = in.readString();
@@ -128,13 +126,9 @@ public class SubjectReport implements Parcelable{
   }
 
   public void setScoreText(String scoreText) {
-    this.scoreText = scoreText = scoreText.trim();
-
-    if (!scoreText.equalsIgnoreCase("private") && scoreText.length() > 0) {
-      int tillPoint = scoreText.indexOf("Point");
-      this.score = Utils.decodeNumber(scoreText, 0, tillPoint == -1 ? scoreText.length() : tillPoint);
-    } else {
-      this.score = Double.NaN;
+    this.scoreText = scoreText;
+    if(!"Private".equals(scoreText.trim())) {
+      this.score = Assignment.decodePointNumber(scoreText);
     }
   }
 
@@ -183,8 +177,7 @@ public class SubjectReport implements Parcelable{
       return null;
     }
 
-    return new OptionsBuilder<String, String>()
-        .put("p_process", "viewRecordReport")
+    return new OptionsBuilder<String, String>().put("p_process", "viewRecordReport")
         .put("p_pageno", "")
         .put("p_grcode", clearQuotes(detailAttrs[0]))
         .put("p_subj", clearQuotes(detailAttrs[1]))
@@ -201,12 +194,11 @@ public class SubjectReport implements Parcelable{
     this.detailAttrs = detailAttrs;
   }
 
-  public String[] getDetailAttrsArray(){
+  public String[] getDetailAttrsArray() {
     return detailAttrs;
   }
 
-  @Override
-  public String toString() {
+  @Override public String toString() {
     return "SubjectReport{" +
         "name='" + name + '\'' +
         ", scoreText='" + scoreText + '\'' +

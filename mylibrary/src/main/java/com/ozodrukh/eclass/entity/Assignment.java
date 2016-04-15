@@ -3,7 +3,6 @@ package com.ozodrukh.eclass.entity;
 import android.os.Parcel;
 import android.os.Parcelable;
 import android.text.TextUtils;
-import com.ozodrukh.eclass.guava.ParcelableUtils;
 import java.util.Date;
 
 public class Assignment implements Parcelable {
@@ -156,7 +155,7 @@ public class Assignment implements Parcelable {
     }
   }
 
-  protected static double decodePointNumber(String scoreText){
+  public static double decodePointNumber(String scoreText){
     int tillPoint = scoreText.indexOf("Point");
     if (tillPoint != -1) {
       scoreText = scoreText.substring(0, tillPoint).trim();

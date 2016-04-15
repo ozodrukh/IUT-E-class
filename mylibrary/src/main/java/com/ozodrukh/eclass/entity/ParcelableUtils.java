@@ -1,36 +1,18 @@
-package com.ozodrukh.eclass.guava;
+package com.ozodrukh.eclass.entity;
 
 import android.os.Parcel;
 import android.os.Parcelable;
 import java.util.ArrayList;
 import java.util.Date;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 
 /**
  * Utility class that helpes write lists, maps and so on (unsupported types) to
  * {@link Parcelable}
  */
-public class ParcelableUtils {
+final class ParcelableUtils {
   static final int NULL_OBJECT = 0;
   static final int NORMAL_OBJECT = 1;
-
-  /* Some objects may not have Parcelable implementation due some limitations or third party
-   * software, this is map of this objects with parcelable implementation */
-  private static final Map<Class, ParcelableObject<?>> OBJECT_WRITERS = new HashMap<>();
-
-  /**
-   * Register object to be able write/read from {@link Parcel} that has no
-   * {@link Parcelable} implementation
-   *
-   * @param unimplementedParcelableClass Unimplemented class
-   * @param implementation Parcelable implementation of not parcelable object
-   */
-  public static <T> void register(Class<T> unimplementedParcelableClass,
-      ParcelableObject<T> implementation) {
-    OBJECT_WRITERS.put(unimplementedParcelableClass, implementation);
-  }
 
   /**
    * Missing functionality inside {@link Parcel} object to read/write
@@ -62,16 +44,6 @@ public class ParcelableUtils {
       parcel.writeInt(NORMAL_OBJECT);
       if (object instanceof Parcelable) {
         ((Parcelable) object).writeToParcel(parcel, flags);
-      } else {
-        //noinspection unchecked
-        ParcelableObject<T> impl = (ParcelableObject<T>) OBJECT_WRITERS.get(object.getClass());
-
-        if (impl != null) {
-          impl.writeToParcel(object, parcel, flags);
-        } else {
-          throw new NullPointerException(
-              "Parcelable implementation not found for " + object.getClass().getSimpleName());
-        }
       }
     }
   }
@@ -132,9 +104,5 @@ public class ParcelableUtils {
     for (int i = 0; i < N; i++) {
       data.add(readNullableParcelable(creator, source));
     }
-  }
-
-  public interface ParcelableObject<T> {
-    void writeToParcel(T value, Parcel dest, int flags);
   }
 }

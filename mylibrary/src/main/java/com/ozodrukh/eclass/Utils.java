@@ -7,7 +7,7 @@ import okhttp3.HttpUrl;
 import java.util.ArrayList;
 import java.util.List;
 
-public final class Utils {
+final class Utils {
 
   static String pathSegment(HttpUrl url, int segment){
     List<String> path = url.pathSegments();
@@ -28,7 +28,7 @@ public final class Utils {
   /**
    * Simple cookie manager implementation
    * */
-  public static CookieJar provideCookiesManager(List<Cookie> persistent){
+  static CookieJar provideCookiesManager(List<Cookie> persistent){
     return new SimpleCookieJar(persistent);
   }
 
@@ -55,61 +55,6 @@ public final class Utils {
         }
       }
       return cookies;
-    }
-  }
-
-  /**
-   * Determine whether the characters is a number. Numbers are of the
-   * form -12.34e+56. Fractional and exponential parts are optional. Leading
-   * zeroes are not allowed in the value or exponential part, but are allowed
-   * in the fraction.
-   */
-  public static Double decodeNumber(String value, int offset, int length) {
-    char[] chars = value.toCharArray();
-    int i = offset;
-    int c = chars[i];
-
-    if (c == '-') {
-      c = chars[++i];
-    }
-
-    if (c == '0') {
-      c = chars[++i];
-    } else if (c >= '1' && c <= '9') {
-      c = chars[++i];
-      while (c >= '0' && c <= '9') {
-        c = chars[++i];
-      }
-    } else {
-      return Double.NaN;
-    }
-
-    if (c == '.') {
-      c = chars[++i];
-      while (c >= '0' && c <= '9') {
-        c = chars[++i];
-      }
-    }
-
-    if (c == 'e' || c == 'E') {
-      c = chars[++i];
-      if (c == '+' || c == '-') {
-        c = chars[++i];
-      }
-      if (c >= '0' && c <= '9') {
-        c = chars[++i];
-        while (c >= '0' && c <= '9') {
-          c = chars[++i];
-        }
-      } else {
-        return Double.NaN;
-      }
-    }
-
-    if (i == offset + length) {
-      return Double.parseDouble(value.substring(offset, offset + length));
-    } else {
-      return Double.NaN;
     }
   }
 }

@@ -1,13 +1,13 @@
-package com.ozodrukh.eclass.guava;
+package com.ozodrukh.eclass;
 
-import android.util.ArrayMap;
+import java.util.HashMap;
 import java.util.Map;
 
 public class OptionsBuilder<K, V>{
-  private ArrayMap<K, V> options;
+  private Map<K, V> options;
 
   public OptionsBuilder() {
-    options = new ArrayMap<>();
+    options = new HashMap<>();
   }
 
   public OptionsBuilder<K, V> put(K key, V value){

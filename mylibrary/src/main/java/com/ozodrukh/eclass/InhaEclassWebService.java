@@ -2,7 +2,6 @@ package com.ozodrukh.eclass;
 
 import com.ozodrukh.eclass.entity.Subject;
 import com.ozodrukh.eclass.entity.User;
-import com.ozodrukh.eclass.guava.OptionsBuilder;
 import java.util.List;
 import java.util.Map;
 import okhttp3.ResponseBody;
