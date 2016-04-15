@@ -41,7 +41,8 @@ public class LoginEclassFragment extends BaseFragment {
   private EditText userPasswordView;
 
   @Nullable @Override
-  public View onCreateView(LayoutInflater inflater, @Nullable ViewGroup container) {
+  public View onCreateView(LayoutInflater inflater, @Nullable ViewGroup container,
+      @Nullable Bundle savedInstanceState) {
     return inflater.inflate(R.layout.eclass_login_fragmnet, container, false);
   }
 
