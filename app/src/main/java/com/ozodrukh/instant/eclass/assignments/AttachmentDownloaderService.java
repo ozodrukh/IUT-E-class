@@ -80,6 +80,10 @@ public class AttachmentDownloaderService extends Service {
   }
 
   @Override public int onStartCommand(Intent intent, int flags, int startId) {
+    if(intent == null){
+      return START_NOT_STICKY;
+    }
+
     requests.push(new AttachmentRequest(intent));
 
     handler.sendEmptyMessage(MSG_START_DOWNLOADING_SERVICE);
