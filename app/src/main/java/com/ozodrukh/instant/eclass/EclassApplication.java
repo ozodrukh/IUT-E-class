@@ -20,7 +20,7 @@ public class EclassApplication extends Application{
     Timber.plant(new AndroidUtils.AndroidDebugTree());
 
     // Initializing the AppMetrica SDK
-    YandexMetrica.activate(getApplicationContext(), "0a0859b6-6bf3-4c25-82cd-1cbae54c0023");
+    YandexMetrica.activate(getApplicationContext(), "");
     // Tracking user activity
     YandexMetrica.enableActivityAutoTracking(this);
   }
