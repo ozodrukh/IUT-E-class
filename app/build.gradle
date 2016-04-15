@@ -1,5 +1,10 @@
 apply plugin: 'com.android.application'
 
+def versionMajor = 0
+def versionMinor = 2
+def versionPatch = 1
+def versionBuild = 1
+
 android {
   compileSdkVersion 23
   buildToolsVersion '23.0.3'
@@ -7,8 +12,8 @@ android {
     applicationId "com.ozodrukh.instant.eclass"
     minSdkVersion 16
     targetSdkVersion 23
-    versionCode 1
-    versionName "1.0"
+    versionCode versionMajor * 10000 + versionMinor * 1000 + versionPatch * 100 + versionBuild
+    versionName "${versionMajor}.${versionMinor}.${versionPatch}"
   }
   buildTypes {
     release {
