@@ -55,7 +55,7 @@ public class LoginEclassFragment extends BaseFragment {
 
     signInButton.setOnClickListener(new View.OnClickListener() {
       @Override public void onClick(View v) {
-        Snackbar.make(v, String.format("Signin process username = %s, password = %s, online = %s",
+        Snackbar.make(v, String.format("Sign in process username = %s, password = %s, online = %s",
             userIdView.getText(), userPasswordView.getText(),
             AndroidUtils.isNetworkAvailable(getContext())), Snackbar.LENGTH_LONG).show();
 
@@ -117,9 +117,8 @@ public class LoginEclassFragment extends BaseFragment {
             if (e instanceof IOException) {
               setLoginFormEnabled(true);
 
-              Snackbar.make(view,
-                  AndroidUtils.getExceptionDetailHumanReadableMessage(getContext(), (IOException) e),
-                  Snackbar.LENGTH_LONG).show();
+              Snackbar.make(view, AndroidUtils.getExceptionDetailHumanReadableMessage(getContext(),
+                  (IOException) e), Snackbar.LENGTH_LONG).show();
             } else {
               Snackbar.make(view, e.getLocalizedMessage(), Snackbar.LENGTH_LONG).show();
             }
