@@ -2,7 +2,7 @@ apply plugin: 'com.android.library'
 
 android {
   compileSdkVersion 23
-  buildToolsVersion "23.0.2"
+  buildToolsVersion "23.0.3"
 
   defaultConfig {
     minSdkVersion 16
@@ -16,12 +16,17 @@ android {
   }
 }
 
+ext{
+  retrofit_version = "2.0.2"
+  okhttp_version = "3.2.0"
+}
+
 dependencies {
   compile 'org.jsoup:jsoup:1.8.3'
-  compile 'com.squareup.okhttp3:okhttp:3.1.2'
-  compile 'com.squareup.retrofit2:retrofit:2.0.0-beta4'
-  compile 'com.squareup.retrofit2:converter-jackson:2.0.0-beta4'
-  compile 'com.squareup.retrofit2:adapter-rxjava:2.0.0-beta4'
-  compile 'com.squareup.okhttp:logging-interceptor:2.7.0'
+  compile "com.squareup.okhttp3:okhttp:$okhttp_version"
+  compile "com.squareup.retrofit2:retrofit:$retrofit_version"
+  compile "com.squareup.retrofit2:converter-jackson:$retrofit_version"
+  compile "com.squareup.retrofit2:adapter-rxjava:$retrofit_version"
+  compile 'com.squareup.duktape:duktape-android:0.9.5'
   compile 'io.reactivex:rxjava:1.0.14'
 }
