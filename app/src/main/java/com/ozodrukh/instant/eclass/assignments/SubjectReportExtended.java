@@ -118,7 +118,7 @@ public class SubjectReportExtended extends SubjectReport implements Parcelable {
   public static void setFakeAttachmentLink(TextView textView, SubjectReport report) {
     if (LINK_COLOR_SPAN == null) {
       LINK_COLOR_SPAN = new ForegroundColorSpan(
-          ContextCompat.getColor(textView.getContext(), R.color.attachment_links_color));
+          ContextCompat.getColor(textView.getContext(), R.color.colorWebLinks));
     }
 
     boolean isAttachmentExists = true;

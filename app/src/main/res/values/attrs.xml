@@ -5,4 +5,8 @@
   <attr name="relativeTime" format="string" />
   <attr name="fakeAttachmentLink" format="string" />
 
+  <declare-styleable name="BlurBackgroundView">
+    <attr name="overlayColor" format="color" />
+  </declare-styleable>
+
 </resources>

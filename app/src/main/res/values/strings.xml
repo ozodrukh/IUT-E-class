@@ -5,4 +5,11 @@
   <string name="navigation_drawer_close">Close navigation drawer</string>
 
   <string name="action_settings">Settings</string>
+  <string name="user_hint_write_student_id">Student ID (e.g U1X10000)</string>
+  <string name="user_hint_e_class_password">E-class password</string>
+  <string name="eclass_login_sign_in">sign in</string>
+  <string name="eclass_signin_process_description">Logging you in</string>
+  <string name="login_failed_user_not_found">User not found</string>
+  <string name="login_proceed_welcome_tpl">"Welcome, "</string>
+  <string name="no_network_connection">No network connection</string>
 </resources>

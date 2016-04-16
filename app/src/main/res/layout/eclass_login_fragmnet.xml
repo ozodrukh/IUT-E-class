@@ -1,29 +1,144 @@
 <?xml version="1.0" encoding="utf-8"?>
-<LinearLayout
+<ScrollView
     xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
-    android:orientation="vertical"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    tools:context=".accounts.LoginEclassFragment">
-
-  <EditText
-      android:id="@+id/user_id"
+    android:fillViewport="true"
+    >
+  <com.ozodrukh.instant.eclass.accounts.BlurBackgroundView
+      xmlns:android="http://schemas.android.com/apk/res/android"
+      xmlns:app="http://schemas.android.com/apk/res-auto"
+      xmlns:tools="http://schemas.android.com/tools"
       android:layout_width="match_parent"
       android:layout_height="wrap_content"
-      />
+      >
+      <LinearLayout
+          android:layout_width="match_parent"
+          android:layout_height="wrap_content"
+          android:layout_marginTop="16dp"
+          android:orientation="vertical"
+          android:paddingLeft="32dp"
+          android:paddingRight="32dp"
+          >
 
-  <EditText
-      android:id="@+id/password"
-      android:layout_width="match_parent"
-      android:layout_height="wrap_content"
-      />
+        <TextView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:fontFamily="sans-serif-condensed"
+            android:text="Welcome to IUT"
+            android:textColor="?android:textColorPrimaryInverse"
+            android:textStyle="bold"
+            style="@style/Base.TextAppearance.AppCompat.Display1"
+            />
 
-  <Button
-      android:id="@+id/signIn"
-      android:layout_width="wrap_content"
-      android:layout_height="wrap_content"
-      android:text="sign in"
-      />
+        <TextView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:fontFamily="sans-serif-condensed"
+            android:text="Your assignments, scores, exams all in one place"
+            android:textColor="?android:textColorSecondaryInverse"
+            android:textStyle="bold"
+            style="@style/Base.TextAppearance.AppCompat.Subhead"
+            />
 
-</LinearLayout>
+      </LinearLayout>
+
+      <android.support.v7.widget.CardView
+          android:id="@+id/sign_in_form"
+          android:layout_width="@dimen/login_card_max_width"
+          android:layout_height="wrap_content"
+          android:layout_gravity="left|bottom"
+          android:layout_margin="8dp"
+          app:cardCornerRadius="1dp"
+          app:cardElevation="8dp"
+          app:cardUseCompatPadding="true"
+          app:contentPadding="16dp"
+          >
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical"
+            tools:context=".accounts.LoginEclassFragment"
+            >
+
+          <TextView
+              android:layout_width="match_parent"
+              android:layout_height="wrap_content"
+              android:layout_marginBottom="4dp"
+              android:fontFamily="sans-serif"
+              android:text="Sign in to E-class"
+              android:textStyle="normal"
+              style="@style/Base.TextAppearance.AppCompat.Title"
+              />
+
+          <TextView
+              android:id="@+id/additional_subtitle"
+              android:layout_width="match_parent"
+              android:layout_height="wrap_content"
+              android:alpha="0.86"
+              android:text="Request id not found"
+              android:textStyle="normal"
+              android:visibility="gone"
+              tools:visibility="visible"
+              style="@style/TextAppearance.AppTheme.Info"
+              />
+
+          <EditText
+              android:id="@+id/user_id"
+              android:layout_width="match_parent"
+              android:layout_height="wrap_content"
+              android:layout_marginTop="4dp"
+              android:nextFocusDown="@+id/password"
+              android:nextFocusForward="@+id/password"
+              android:imeOptions="actionNext"
+              android:fontFamily="sans-serif-light"
+              android:hint="@string/user_hint_write_student_id"
+              style="@style/Base.TextAppearance.AppCompat.Body1"
+              />
+
+          <com.ozodrukh.instant.eclass.accounts.PasswordView
+              android:id="@+id/password"
+              android:layout_width="match_parent"
+              android:layout_height="wrap_content"
+              android:fontFamily="sans-serif-light"
+              android:imeOptions="actionNext"
+              android:nextFocusUp="@+id/user_id"
+              android:nextFocusDown="@+id/signIn"
+              android:nextFocusForward="@+id/signIn"
+              android:hint="@string/user_hint_e_class_password"
+              android:inputType="textPassword"
+              style="@style/Base.TextAppearance.AppCompat.Body1"
+              />
+
+          <FrameLayout
+              android:layout_width="match_parent"
+              android:layout_height="wrap_content"
+              android:orientation="horizontal"
+              >
+
+            <Button
+                android:id="@+id/signIn"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="@string/eclass_login_sign_in"
+                style="@style/Base.Widget.AppCompat.Button.Colored"
+                />
+
+            <ProgressBar
+                android:id="@+id/progress_bar"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_gravity="right"
+                android:visibility="invisible"
+                />
+
+          </FrameLayout>
+
+        </LinearLayout>
+
+      </android.support.v7.widget.CardView>
+  </com.ozodrukh.instant.eclass.accounts.BlurBackgroundView>
+</ScrollView>

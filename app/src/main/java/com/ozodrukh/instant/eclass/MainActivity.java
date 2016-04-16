@@ -73,6 +73,8 @@ import static com.ozodrukh.eclass.InhaSessionEncoder.encode;
       if (resultCode == RESULT_OK) {
         User user = data.getParcelableExtra(LoginEclassFragment.KEY_USER);
         setPrimaryUser(user);
+      } else if (resultCode == RESULT_CANCELED) {
+        finish();
       }
     }
   }

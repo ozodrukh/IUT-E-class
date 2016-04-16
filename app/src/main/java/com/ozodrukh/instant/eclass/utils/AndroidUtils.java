@@ -1,8 +1,13 @@
 package com.ozodrukh.instant.eclass.utils;
 
 import android.content.Context;
+import android.graphics.drawable.Drawable;
+import android.graphics.drawable.VectorDrawable;
 import android.net.ConnectivityManager;
 import android.net.NetworkInfo;
+import android.os.Build;
+import android.support.annotation.DrawableRes;
+import android.support.graphics.drawable.VectorDrawableCompat;
 import android.util.Log;
 import com.ozodrukh.eclass.Timber;
 import java.io.IOException;
@@ -14,13 +19,27 @@ import java.util.regex.Pattern;
 public class AndroidUtils {
 
   /**
+   * @param context Context with Resources & Theme
+   * @param drawable Drawable to load
+   * @return Platform specific {@link VectorDrawable} or {@link VectorDrawableCompat}
+   *  due to bug on API 23 with compat vector drawable
+   */
+  public static Drawable loadVectorDrawable(Context context, @DrawableRes int drawable) {
+    if (Build.VERSION.SDK_INT >= 23) {
+      return context.getDrawable(drawable);
+    } else {
+      return VectorDrawableCompat.create(context.getResources(), drawable, context.getTheme());
+    }
+  }
+
+  /**
    * Checks whether mobile device connected to the network
    *
    * @param context Activity context
    * @return True if has active network and it is connected and has network
    * otherwise returns False
    */
-  public static boolean isNetworkAvailable(Context context){
+  public static boolean isNetworkAvailable(Context context) {
     ConnectivityManager manager =
         (ConnectivityManager) context.getSystemService(Context.CONNECTIVITY_SERVICE);
     NetworkInfo currentNetworkInfo = manager.getActiveNetworkInfo();
@@ -31,30 +50,33 @@ public class AndroidUtils {
    * @return Active network info that device connected to
    * @see ConnectivityManager#getActiveNetwork()
    */
-  public static NetworkInfo getActiveNetwork(Context context){
+  public static NetworkInfo getActiveNetwork(Context context) {
     ConnectivityManager manager =
         (ConnectivityManager) context.getSystemService(Context.CONNECTIVITY_SERVICE);
     return manager.getActiveNetworkInfo();
   }
 
-  public static CharSequence getExceptionDetailHumanReadableMessage(Context context, IOException e){
+  public static CharSequence getExceptionDetailHumanReadableMessage(Context context,
+      IOException e) {
     NetworkInfo networkInfo = AndroidUtils.getActiveNetwork(context);
     StringBuilder troubleCauseName = new StringBuilder();
 
-    if(networkInfo == null){
+    if (networkInfo == null) {
       troubleCauseName.append("Device is not connected to network");
-    }else if(e instanceof SocketTimeoutException){
+    } else if (e instanceof SocketTimeoutException) {
       troubleCauseName.append("Seems like network(")
           .append(networkInfo.getTypeName().toLowerCase())
           .append(") has high latency (poor condition)");
-    }else if(e instanceof UnknownHostException){
+    } else if (e instanceof UnknownHostException) {
       troubleCauseName.append("Looks like website is down, try some later");
+    } else{
+      troubleCauseName.append("Unknown network error");
     }
 
     return troubleCauseName.toString();
   }
 
-  public static class AndroidDebugTree extends Timber.Tree{
+  public static class AndroidDebugTree extends Timber.Tree {
     private static final int MAX_LOG_LENGTH = 4000;
     private static final int CALL_STACK_INDEX = 5;
     private static final Pattern ANONYMOUS_CLASS = Pattern.compile("(\\$\\d+)+$");
@@ -64,7 +86,8 @@ public class AndroidUtils {
      * this will use the class name without any anonymous class suffixes (e.g., {@code Foo$1}
      * becomes {@code Foo}).
      * <p>
-     * Note: This will not be called if a {@linkplain Timber.Tree#tag(String) manual tag} was specified.
+     * Note: This will not be called if a {@linkplain Timber.Tree#tag(String) manual tag} was
+     * specified.
      */
     protected String createStackElementTag(StackTraceElement element) {
       String tag = element.getClassName();

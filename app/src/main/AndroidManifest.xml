@@ -33,7 +33,11 @@
     </activity>
 
     <!-- Authentication Activity responsible for user log ins, launched by MainActivity class -->
-    <activity android:name=".accounts.AuthenticationActivity" />
+    <activity
+        android:name=".accounts.AuthenticationActivity"
+        android:windowSoftInputMode="adjustPan"
+        android:theme="@style/AppTheme.NoActionBar"
+        />
 
     <service android:name=".accounts.EclassAuthenticationService">
       <intent-filter>
