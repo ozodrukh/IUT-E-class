@@ -151,7 +151,7 @@ public class AssignmentsReportFragment extends BaseFragment {
    */
   public void requestRecreate() {
     adapter.clear();
-    pagination.setPage(0);
+    pagination.setPage(reportsListView, 0);
   }
 
   /**
