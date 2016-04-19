@@ -1,5 +1,6 @@
 package com.ozodrukh.instant.eclass;
 
+import android.Manifest;
 import android.accounts.Account;
 import android.accounts.AccountManager;
 import android.accounts.AccountManagerCallback;
@@ -7,6 +8,7 @@ import android.accounts.AccountManagerFuture;
 import android.content.Intent;
 import android.os.Build;
 import android.os.Bundle;
+import android.os.Environment;
 import android.support.annotation.NonNull;
 import android.support.design.widget.NavigationView;
 import android.support.v4.app.FragmentTransaction;
@@ -18,14 +20,20 @@ import android.view.MenuItem;
 import android.view.View;
 import android.widget.TextView;
 import com.ozodrukh.eclass.InhaEclassController;
+import com.ozodrukh.eclass.entity.SubjectReport;
 import com.ozodrukh.eclass.entity.User;
 import com.ozodrukh.instant.eclass.accounts.AuthenticationActivity;
 import com.ozodrukh.instant.eclass.accounts.EclassAuthenticator;
 import com.ozodrukh.instant.eclass.accounts.LoginEclassFragment;
 import com.ozodrukh.instant.eclass.assignments.AssignmentsReportFragment;
+import com.ozodrukh.instant.eclass.assignments.AttachmentDownloaderService;
+import com.ozodrukh.instant.eclass.permission.Police;
 import com.ozodrukh.instant.eclass.utils.RxUtils;
 import com.trello.rxlifecycle.components.support.RxAppCompatActivity;
+import java.io.File;
 import java.util.List;
+import permissions.dispatcher.NeedsPermission;
+import permissions.dispatcher.RuntimePermissions;
 import retrofit2.Response;
 import rx.android.schedulers.AndroidSchedulers;
 import rx.functions.Action1;
@@ -33,8 +41,8 @@ import rx.schedulers.Schedulers;
 
 import static com.ozodrukh.eclass.InhaSessionEncoder.encode;
 
-@SuppressWarnings("ConstantConditions") public class MainActivity extends RxAppCompatActivity
-    implements NavigationView.OnNavigationItemSelectedListener {
+@SuppressWarnings("ConstantConditions") @RuntimePermissions public class MainActivity
+    extends RxAppCompatActivity implements NavigationView.OnNavigationItemSelectedListener {
 
   private NavigationView navigationView;
 
@@ -53,17 +61,20 @@ import static com.ozodrukh.eclass.InhaSessionEncoder.encode;
 
     navigationView = (NavigationView) findViewById(R.id.nav_view);
     navigationView.setNavigationItemSelectedListener(this);
+
+    checkUserLoggedIn(savedInstanceState == null);
   }
 
   @Override protected void onResume() {
     super.onResume();
 
-    checkUserLoggedIn();
+    checkUserLoggedIn(false);
   }
 
   @Override public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions,
       @NonNull int[] grantResults) {
     super.onRequestPermissionsResult(requestCode, permissions, grantResults);
+    Police.with(this).onRequestPermissionsResult(this, requestCode, permissions, grantResults);
   }
 
   @Override protected void onActivityResult(int requestCode, int resultCode, Intent data) {
@@ -77,6 +88,24 @@ import static com.ozodrukh.eclass.InhaSessionEncoder.encode;
         finish();
       }
     }
+  }
+
+  @NeedsPermission(Manifest.permission.WRITE_EXTERNAL_STORAGE)
+  public void dispatchHandleAttachmentLink(SubjectReport report) {
+    File baseDir =
+        new File(Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS),
+            "E-class");
+
+    if (!baseDir.exists() && !baseDir.mkdirs()) {
+      throw new RuntimeException("No access to storage");
+    }
+
+    File destination = new File(baseDir, report.getName());
+
+    Intent intent = new Intent(this, AttachmentDownloaderService.class);
+    intent.putExtra(AttachmentDownloaderService.EXTRA_ASSIGNMENT_SUBJECT, report);
+    intent.putExtra(AttachmentDownloaderService.EXTRA_DESTINATION, destination.getPath());
+    this.startService(intent);
   }
 
   /**
@@ -102,14 +131,14 @@ import static com.ozodrukh.eclass.InhaSessionEncoder.encode;
    * log in in order to use Application therefore we launching {@link AuthenticationActivity}
    * otherwise we loading assignments history
    */
-  protected void checkUserLoggedIn() {
+  protected void checkUserLoggedIn(boolean refershToken) {
     Account[] eclassAccounts = EclassAuthenticator.getAccounts();
 
     if (eclassAccounts.length == 0) {
       // REQUEST User Log in
       startActivityForResult(new Intent(this, AuthenticationActivity.class),
           AuthenticationActivity.REQUEST_ID);
-    } else {
+    } else if (refershToken) {
       AccountManager am = AccountManager.get(this);
       //TODO multi account feature
       Account primaryAccount = eclassAccounts[0];
@@ -145,7 +174,6 @@ import static com.ozodrukh.eclass.InhaSessionEncoder.encode;
     if (reportFragment == null) {
       reportFragment = new AssignmentsReportFragment();
       transaction.add(R.id.app_content_view, reportFragment, AssignmentsReportFragment.TAG)
-          .addToBackStack(AssignmentsReportFragment.TAG)
           .commit();
     } else {
       reportFragment.requestRecreate();

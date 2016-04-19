@@ -18,6 +18,10 @@ import java.util.regex.Pattern;
 
 public class AndroidUtils {
 
+  public static <T> T defaultOnNull(T value, T defValue){
+    return value == null ? defValue : value;
+  }
+
   /**
    * @param context Context with Resources & Theme
    * @param drawable Drawable to load

@@ -2,18 +2,22 @@ package com.ozodrukh.instant.eclass.utils;
 
 import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
+import android.view.View;
+import android.view.ViewTreeObserver;
 import com.ozodrukh.eclass.Timber;
+import java.lang.ref.WeakReference;
 
 import static android.support.v7.widget.RecyclerView.SCROLL_STATE_IDLE;
 
 public class EndlessPagination extends RecyclerView.OnScrollListener {
   public static final int THRESHOLD = 7;
 
-  private LinearLayoutManager layout;
   private OnThresholdReachListener listener;
 
   private boolean receiveNotifications;
   private int threshold, page;
+
+  private WeakReference<RecyclerView> viewRef;
 
   public EndlessPagination(RecyclerView view, OnThresholdReachListener listener,
       boolean receiveNotifications, int threshold, int page) {
@@ -28,15 +32,15 @@ public class EndlessPagination extends RecyclerView.OnScrollListener {
     this.page = page;
     this.listener = listener;
     this.threshold = threshold;
-    this.layout = (LinearLayoutManager) view.getLayoutManager();
     this.receiveNotifications = receiveNotifications;
 
     view.addOnScrollListener(this);
+    viewRef = new WeakReference<>(view);
 
     // zero page means that view requires to load first page
-    if(page == 0) {
+    if (page == 0) {
       // load first page
-      onScrollStateChanged(null, SCROLL_STATE_IDLE);
+      onScrollStateChanged(view, SCROLL_STATE_IDLE);
     }
   }
 
@@ -46,17 +50,27 @@ public class EndlessPagination extends RecyclerView.OnScrollListener {
 
   public void setReceiveNotifications(boolean sendNotifications) {
     this.receiveNotifications = sendNotifications;
-    // try load next page if empty space is left
-    onScrollStateChanged(null, SCROLL_STATE_IDLE);
+    if (viewRef.get() != null) {
+
+      final View target = viewRef.get();
+      target.getViewTreeObserver()
+          .addOnGlobalLayoutListener(new ViewTreeObserver.OnGlobalLayoutListener() {
+            @Override public void onGlobalLayout() {
+              target.getViewTreeObserver().removeOnGlobalLayoutListener(this);
+              // try load next page if empty space is left
+              onScrollStateChanged(viewRef.get(), SCROLL_STATE_IDLE);
+            }
+          });
+    }
   }
 
-  public void setPage(RecyclerView recyclerView, int pageNumber){
+  public void setPage(int pageNumber) {
     this.page = pageNumber;
 
     // zero page means that view requires to load first page
-    if(page == 0) {
+    if (page == 0) {
       // load first page
-      onScrollStateChanged(recyclerView, SCROLL_STATE_IDLE);
+      onScrollStateChanged(viewRef.get(), SCROLL_STATE_IDLE);
     }
   }
 
@@ -64,7 +78,7 @@ public class EndlessPagination extends RecyclerView.OnScrollListener {
     return receiveNotifications;
   }
 
-  public void onPageDidNotLoaded(){
+  public void onPageDidNotLoaded() {
     page -= 1;
   }
 
@@ -81,13 +95,11 @@ public class EndlessPagination extends RecyclerView.OnScrollListener {
   }
 
   @Override public void onScrollStateChanged(RecyclerView recyclerView, int newState) {
-    if (!canSendNotifications()) {
+    if (!canSendNotifications() || recyclerView == null) {
       return;
     }
 
-    if(layout == null){
-      layout = (LinearLayoutManager) recyclerView.getLayoutManager();
-    }
+    LinearLayoutManager layout = (LinearLayoutManager) recyclerView.getLayoutManager();
 
     Timber.d(
         "state = %d, threshold = %d, totalItemsCount = %d, firstVisibleIndex = %d,\nfirstCompletelyVisible=%s, "

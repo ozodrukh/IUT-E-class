@@ -10,8 +10,12 @@ public class Assignment implements Parcelable {
   private int lesson;
   private String assignmentTitle;
   private Date fromDate;
-  private Date tillDate;
+  private Date dueDate;
+  private Date extensionFromDate;
+  private Date extensionDueDate;
   private Date submissionDate;
+
+  private String status;
 
   private double maxScore;
   private double minScore;
@@ -29,9 +33,12 @@ public class Assignment implements Parcelable {
     dest.writeDouble(minScore);
     dest.writeDouble(totalScore);
     dest.writeString(totalScoreText);
+    dest.writeString(status);
 
     ParcelableUtils.writeDate(dest, fromDate);
-    ParcelableUtils.writeDate(dest, tillDate);
+    ParcelableUtils.writeDate(dest, dueDate);
+    ParcelableUtils.writeDate(dest, extensionFromDate);
+    ParcelableUtils.writeDate(dest, extensionDueDate);
     ParcelableUtils.writeDate(dest, submissionDate);
   }
 
@@ -43,9 +50,12 @@ public class Assignment implements Parcelable {
     minScore = in.readDouble();
     totalScore = in.readDouble();
     totalScoreText = in.readString();
+    status = in.readString();
 
     fromDate = ParcelableUtils.readDate(in);
-    tillDate = ParcelableUtils.readDate(in);
+    dueDate = ParcelableUtils.readDate(in);
+    extensionFromDate = ParcelableUtils.readDate(in);
+    extensionDueDate = ParcelableUtils.readDate(in);
     submissionDate = ParcelableUtils.readDate(in);
   }
 
@@ -58,6 +68,34 @@ public class Assignment implements Parcelable {
       return new Assignment[size];
     }
   };
+
+  public Date getExtensionFromDate() {
+    return extensionFromDate;
+  }
+
+  public void setExtensionFromDate(Date extensionFromDate) {
+    this.extensionFromDate = extensionFromDate;
+  }
+
+  public Date getExtensionDueDate() {
+    return extensionDueDate;
+  }
+
+  public void setExtensionDueDate(Date extensionDueDate) {
+    this.extensionDueDate = extensionDueDate;
+  }
+
+  public String getStatus() {
+    return status;
+  }
+
+  public boolean isSubmitted(){
+    return "submitted".equalsIgnoreCase(status);
+  }
+
+  public void setStatus(String status) {
+    this.status = status;
+  }
 
   public int getWeek() {
     return week;
@@ -91,12 +129,12 @@ public class Assignment implements Parcelable {
     this.fromDate = fromDate;
   }
 
-  public Date getTillDate() {
-    return tillDate;
+  public Date getDueDate() {
+    return dueDate;
   }
 
-  public void setTillDate(Date tillDate) {
-    this.tillDate = tillDate;
+  public void setDueDate(Date dueDate) {
+    this.dueDate = dueDate;
   }
 
   public Date getSubmissionDate() {
@@ -169,11 +207,15 @@ public class Assignment implements Parcelable {
         ", lesson=" + lesson +
         ", assignmentTitle='" + assignmentTitle + '\'' +
         ", fromDate=" + fromDate +
-        ", tillDate=" + tillDate +
+        ", dueDate=" + dueDate +
+        ", extensionFromDate=" + extensionFromDate +
+        ", extensionDueDate=" + extensionDueDate +
         ", submissionDate=" + submissionDate +
+        ", status='" + status + '\'' +
         ", maxScore=" + maxScore +
         ", minScore=" + minScore +
         ", totalScore=" + totalScore +
+        ", totalScoreText='" + totalScoreText + '\'' +
         '}';
   }
 

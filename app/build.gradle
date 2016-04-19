@@ -1,8 +1,9 @@
 apply plugin: 'com.android.application'
+apply plugin: 'android-apt'
 
 def versionMajor = 0
 def versionMinor = 3
-def versionPatch = 0
+def versionPatch = 1
 def versionBuild = 1
 
 android {
@@ -14,6 +15,7 @@ android {
     targetSdkVersion 23
     versionCode versionMajor * 10000 + versionMinor * 1000 + versionPatch * 100 + versionBuild
     versionName "${versionMajor}.${versionMinor}.${versionPatch}"
+    vectorDrawables.useSupportLibrary = true
   }
   buildTypes {
     release {
@@ -28,10 +30,14 @@ android {
   dataBinding {
     enabled = true
   }
+  aaptOptions {
+    additionalParameters "--no-version-vectors"
+  }
 }
 
 ext{
   supportLibVersion = "23.3.0"
+  PDVersion = "2.1.2"
 }
 
 dependencies {
@@ -48,6 +54,9 @@ dependencies {
   compile 'com.trello:rxlifecycle:0.3.0'
   compile 'com.trello:rxlifecycle-components:0.3.0'
   compile 'io.reactivex:rxandroid:1.0.1'
+
+  compile "com.github.hotchemi:permissionsdispatcher:${PDVersion}"
+  apt "com.github.hotchemi:permissionsdispatcher-processor:${PDVersion}"
 
   testCompile 'junit:junit:4.12'
 }

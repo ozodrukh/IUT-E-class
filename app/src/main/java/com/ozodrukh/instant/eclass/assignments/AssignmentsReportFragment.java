@@ -20,8 +20,8 @@ import com.ozodrukh.eclass.Timber;
 import com.ozodrukh.eclass.entity.SubjectReport;
 import com.ozodrukh.instant.eclass.BaseFragment;
 import com.ozodrukh.instant.eclass.R;
-import com.ozodrukh.instant.eclass.utils.EndlessPagination;
 import com.ozodrukh.instant.eclass.utils.AndroidUtils;
+import com.ozodrukh.instant.eclass.utils.EndlessPagination;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -104,18 +104,6 @@ public class AssignmentsReportFragment extends BaseFragment {
   @Override public void onViewCreated(View view, Bundle state) {
     super.onViewCreated(view, state);
     final Context context = getContext();
-    List<SubjectReportExtended> items = Collections.emptyList();
-
-    if (state != null) {
-      pagination = new EndlessPagination(reportsListView, onThresholdReachListener,
-          state.getBoolean("receiveNotifications", true),
-          state.getInt("scrollItemsThreshold", EndlessPagination.THRESHOLD),
-          state.getInt("pagesLoaded", 0));
-
-      items = state.getParcelableArrayList("adapter:items");
-
-      if (items == null) items = Collections.emptyList();
-    }
 
     eclassController = InhaEclassController.getInstance();
 
@@ -124,10 +112,18 @@ public class AssignmentsReportFragment extends BaseFragment {
     reportsListView.setAdapter(adapter = new AssignmentsReportsAdapter());
     reportsListView.addItemDecoration(new BottomDivider(getContext()));
 
-    adapter.addSubjectsReports(items);
+    if (state != null) {
+      pagination = new EndlessPagination(reportsListView, onThresholdReachListener,
+          state.getBoolean("receiveNotifications", true),
+          state.getInt("scrollItemsThreshold", EndlessPagination.THRESHOLD),
+          state.getInt("pagesLoaded", 0));
 
-    pagination = pagination != null ? pagination
-        : new EndlessPagination(reportsListView, onThresholdReachListener);
+      adapter.addSubjectsReports(AndroidUtils.defaultOnNull(
+          state.<SubjectReportExtended>getParcelableArrayList("adapter:items"),
+          Collections.<SubjectReportExtended>emptyList()));
+    } else {
+      pagination = new EndlessPagination(reportsListView, onThresholdReachListener);
+    }
   }
 
   @Override public void onSaveInstanceState(Bundle outState) {
@@ -151,7 +147,7 @@ public class AssignmentsReportFragment extends BaseFragment {
    */
   public void requestRecreate() {
     adapter.clear();
-    pagination.setPage(reportsListView, 0);
+    pagination.setPage(0);
   }
 
   /**
@@ -193,8 +189,8 @@ public class AssignmentsReportFragment extends BaseFragment {
 
             if (getView() != null && err instanceof IOException) {
               Snackbar.make(getView(),
-                  AndroidUtils.getExceptionDetailHumanReadableMessage(getContext(), (IOException) err),
-                  Snackbar.LENGTH_LONG).show();
+                  AndroidUtils.getExceptionDetailHumanReadableMessage(getContext(),
+                      (IOException) err), Snackbar.LENGTH_LONG).show();
             }
           }
         });

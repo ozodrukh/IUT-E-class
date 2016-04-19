@@ -80,7 +80,7 @@ public class AttachmentDownloaderService extends Service {
   }
 
   @Override public int onStartCommand(Intent intent, int flags, int startId) {
-    if(intent == null){
+    if (intent == null) {
       return START_NOT_STICKY;
     }
 
@@ -95,9 +95,9 @@ public class AttachmentDownloaderService extends Service {
   }
 
   protected void startAttachmentDownloading(AttachmentRequest attachmentRequest) {
-    Notification foregroundNotification = new Notification.Builder(this)
-        .setSmallIcon(R.drawable.ic_cloud_download_black_24dp)
-        .build();
+    Notification foregroundNotification =
+        new Notification.Builder(this).setSmallIcon(R.drawable.ic_cloud_download_black_24dp)
+            .build();
 
     startForeground(0, foregroundNotification);
 
@@ -172,19 +172,12 @@ public class AttachmentDownloaderService extends Service {
       error.printStackTrace();
     }
 
-    Intent intentOpenDocument = new Intent(Intent.ACTION_VIEW);
-    intentOpenDocument.setData(Uri.fromFile(destination));
-
-    PendingIntent pendingOpenDocumentIntent =
-        PendingIntent.getActivity(this, 0, intentOpenDocument, PendingIntent.FLAG_ONE_SHOT);
-
-    notification = new NotificationCompat.Builder(this).setContentTitle(attachment.getName())
-        .setContentText("Download complete (tap to open)")
-        .setSmallIcon(R.drawable.ic_cloud_download_black_24dp)
-        .setGroup("assignment_attachments_complete")
-        .setAutoCancel(false)
-        .setContentIntent(pendingOpenDocumentIntent)
-        .build();
+    notification = buildDownloadedFileActions(destination,
+        new NotificationCompat.Builder(this).setContentTitle(attachment.getName())
+            .setContentText("Download complete")
+            .setSmallIcon(R.drawable.ic_cloud_download_black_24dp)
+            .setGroup("assignment_attachments_complete")
+            .setAutoCancel(false)).build();
 
     NotificationManagerCompat.from(this)
         .notify(NOTIFICATION_ID + attachmentsDownloaded.get(), notification);
@@ -195,6 +188,22 @@ public class AttachmentDownloaderService extends Service {
     } else {
       stopForeground(false);
     }
+  }
+
+  NotificationCompat.Builder buildDownloadedFileActions(File destination,
+      NotificationCompat.Builder builder) {
+
+    builder.addAction(0, "Open", PendingIntent.getActivity(this, 0,
+        new Intent(Intent.ACTION_VIEW).setData(Uri.fromFile(destination)),
+        PendingIntent.FLAG_ONE_SHOT));
+
+    Intent shareIntent =
+        new Intent(Intent.ACTION_SEND).putExtra(Intent.EXTRA_STREAM, Uri.fromFile(destination));
+
+    builder.addAction(0, "Share",
+        PendingIntent.getActivity(this, 0, Intent.createChooser(shareIntent, "Share via"), 0));
+
+    return builder;
   }
 
   static class AttachmentRequest {

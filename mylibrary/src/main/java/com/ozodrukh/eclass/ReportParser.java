@@ -6,6 +6,7 @@ import com.ozodrukh.eclass.entity.SubjectReport;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import java.util.Locale;
 import org.jsoup.Jsoup;
@@ -58,7 +59,8 @@ public abstract class ReportParser<ParsedData> {
             case ASSIGNMENT_TITLE:
               Element anchor = element.child(0);
               report.setAttachmentLink(anchor.attr("href"));
-              report.setName(TextUtils.isEmpty(anchor.text()) ? anchor.attr("title") : anchor.text());
+              report.setName(
+                  TextUtils.isEmpty(anchor.text()) ? anchor.attr("title") : anchor.text());
               break;
             case SUBMISSION_DATE:
               try {
@@ -143,7 +145,7 @@ public abstract class ReportParser<ParsedData> {
             String[] dates = dueDate.split("~");
             try {
               assignment.setFromDate(ECLASS_DATE_PATTERN.parse(dates[0].trim()));
-              assignment.setTillDate(ECLASS_DATE_PATTERN.parse(dates[1].trim()));
+              assignment.setDueDate(ECLASS_DATE_PATTERN.parse(dates[1].trim()));
             } catch (ParseException e) {
               e.printStackTrace();
             }
@@ -175,6 +177,74 @@ public abstract class ReportParser<ParsedData> {
       }
 
       return assignment;
+    }
+  }
+
+  public static class AssignmentsParser extends ReportParser<List<Assignment>> {
+
+    public static final int NO = 0;
+    public static final int ASSIGNMENT_TITLE = 1;
+    public static final int DATE = 2;
+    public static final int STATUS = 3;
+    public static final int SEARCH = 4;
+    public static final int COMMUNITY = 5;
+
+    @Override public List<Assignment> parse(String htmlDocument) {
+      Document document = Jsoup.parse(htmlDocument);
+      Elements assignmentsTableRows = document.select(".contentWrapper table tbody tr");
+
+      if (assignmentsTableRows.isEmpty()) {
+        return Collections.emptyList();
+      }
+
+      List<Assignment> assignments = new ArrayList<>();
+
+      for (int i = 1; i < assignmentsTableRows.size(); i++) {
+        if (i % 2 != 0) continue;
+
+        Elements cells = assignmentsTableRows.get(i).children();
+        Assignment assignment = new Assignment();
+        assignments.add(assignment);
+
+        for (int cellIndex = 0; cellIndex < cells.size(); cellIndex++) {
+          Element element = cells.get(cellIndex);
+          switch (cellIndex) {
+            case NO:
+              break;
+            case ASSIGNMENT_TITLE:
+              assignment.setAssignmentTitle(element.text());
+              break;
+            case DATE:
+              String dueDate = element.text();
+              String[] dates = dueDate.split("~");
+              try {
+                assignment.setFromDate(ECLASS_DATE_PATTERN.parse(dates[0].trim()));
+                assignment.setDueDate(ECLASS_DATE_PATTERN.parse(dates[1].trim()));
+              } catch (ParseException e) {
+                e.printStackTrace();
+              }
+
+              String extendedDateText = assignmentsTableRows.get(i + 1).text();
+              String[] extendedDates = extendedDateText.split("~");
+              try {
+                assignment.setExtensionFromDate(ECLASS_DATE_PATTERN.parse(extendedDates[0].trim()));
+                assignment.setExtensionDueDate(ECLASS_DATE_PATTERN.parse(extendedDates[1].trim()));
+              } catch (ParseException e) {
+                e.printStackTrace();
+              }
+              break;
+            case STATUS:
+              assignment.setStatus(element.text());
+              break;
+            case SEARCH:
+              break;
+            case COMMUNITY:
+              break;
+          }
+        }
+      }
+
+      return assignments;
     }
   }
 }

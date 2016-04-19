@@ -1,6 +1,8 @@
 package com.ozodrukh.instant.eclass.assignments;
 
+import android.Manifest;
 import android.app.Activity;
+import android.content.ContextWrapper;
 import android.content.Intent;
 import android.databinding.DataBindingUtil;
 import android.graphics.Typeface;
@@ -20,6 +22,7 @@ import com.ozodrukh.eclass.entity.Assignment;
 import com.ozodrukh.instant.eclass.BR;
 import com.ozodrukh.instant.eclass.R;
 import com.ozodrukh.instant.eclass.databinding.SubjectAssignmentReportItemViewBinding;
+import com.ozodrukh.instant.eclass.permission.Police;
 import com.ozodrukh.instant.eclass.utils.RxUtils;
 import com.ozodrukh.instant.eclass.utils.Truss;
 import java.io.File;
@@ -54,21 +57,29 @@ public class SubjectAssignmentReportViewHolder extends RecyclerView.ViewHolder {
   }
 
   public void handleAttachmentLink(View view) {
-    File baseDir =
-        new File(Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS),
-            "E-class");
+    final ContextWrapper context = (ContextWrapper) view.getContext();
+    Police.with(context)
+        .withPermissions(Manifest.permission.WRITE_EXTERNAL_STORAGE)
+        .withListener(new Runnable() {
+          @Override public void run() {
+            File baseDir = new File(
+                Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS),
+                "E-class");
 
-    if (!baseDir.exists() && !baseDir.mkdirs()) {
-      throw new RuntimeException("No access to storage");
-    }
+            if (!baseDir.exists() && !baseDir.mkdirs()) {
+              throw new RuntimeException("No access to storage");
+            }
 
-    File destination = new File(baseDir, binding.getSubjectReport().getName());
+            File destination = new File(baseDir, binding.getSubjectReport().getName());
 
-    Intent intent = new Intent(view.getContext(), AttachmentDownloaderService.class);
-    intent.putExtra(AttachmentDownloaderService.EXTRA_ASSIGNMENT_SUBJECT,
-        binding.getSubjectReport());
-    intent.putExtra(AttachmentDownloaderService.EXTRA_DESTINATION, destination.getPath());
-    view.getContext().startService(intent);
+            Intent intent = new Intent(context, AttachmentDownloaderService.class);
+            intent.putExtra(AttachmentDownloaderService.EXTRA_ASSIGNMENT_SUBJECT,
+                binding.getSubjectReport());
+            intent.putExtra(AttachmentDownloaderService.EXTRA_DESTINATION, destination.getPath());
+            context.startService(intent);
+          }
+        })
+        .check();
   }
 
   public void handlePrivateScore(View view) {

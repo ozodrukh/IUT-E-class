@@ -1,5 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
   <item type="id" name="eclass_navigation_menu" />
+  <item type="id" name="reports_recycler_view" />
 
 </resources>
